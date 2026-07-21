@@ -19,6 +19,14 @@ jobs:
           curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
+      - name: Install landrun sandbox
+        shell: bash
+        run: |
+          set -euxo pipefail
+          go install github.com/Zouuup/landrun@main
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+          "$HOME/go/bin/landrun" --help >/dev/null
+
       - name: Sparse checkout mission and verifier
         shell: bash
         run: |
