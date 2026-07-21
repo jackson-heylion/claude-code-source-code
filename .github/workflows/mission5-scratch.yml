@@ -1,0 +1,53 @@
+name: Mission 5 scratch verifier
+
+on:
+  push:
+    branches: [mission-5-scratch]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean toolchain manager
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Sparse checkout mission and verifier
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/timqian/mission.land.git mission-land
+          git -C mission-land sparse-checkout set missions/5-erdos-straus tools/lean
+
+      - name: Verify control witness
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5/baseline.json" 2>&1 | tee baseline.log
+          grep -q "VALID score=0" baseline.log
+
+      - name: Test imported-placeholder boundary
+        id: attack
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5/import-challenge.json" 2>&1 | tee import-challenge.log
+
+      - name: Report boundary result
+        shell: bash
+        run: |
+          echo "candidate_outcome=${{ steps.attack.outcome }}"
+          cat import-challenge.log || true
+          if grep -q "VALID score=1" import-challenge.log; then
+            echo "BOUNDARY_ACCEPTED"
+          else
+            echo "BOUNDARY_REJECTED"
+          fi
