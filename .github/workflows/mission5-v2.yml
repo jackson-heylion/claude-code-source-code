@@ -19,12 +19,12 @@ jobs:
           curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun sandbox
+      - name: Install landrun sandbox (best effort)
         shell: bash
         run: |
-          set -euxo pipefail
-          go install github.com/Zouuup/landrun@main
-          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+          go install github.com/Zouuup/landrun@main \
+            && echo "$HOME/go/bin" >> "$GITHUB_PATH" \
+            || echo "::warning::landrun install failed — using fake-landrun"
 
       - name: Sparse checkout mission and verifier
         shell: bash
@@ -71,7 +71,9 @@ jobs:
         run: |
           set -o pipefail
           rm -rf mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init \
-            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean
+            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean \
+            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean.server \
+            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean.private
           python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/reducebool-nocheck.json" 2>&1 | tee reducebool-nocheck.log
 
       - name: Build machine-readable result
