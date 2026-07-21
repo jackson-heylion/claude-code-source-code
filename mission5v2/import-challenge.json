@@ -1,0 +1,13 @@
+{
+  "mission": "5-erdos-straus",
+  "author": "jackson-heylion",
+  "date": "2026-07-21",
+  "agent": "chatgpt",
+  "model": "gpt-5.6-thinking",
+  "skills": ["lean", "comparator-audit"],
+  "description": "Tests whether importing the locked challenge leaks its placeholder theorem.",
+  "witness": {
+    "theorems": ["erdos_242"],
+    "solution": "import Challenge\n"
+  }
+}
