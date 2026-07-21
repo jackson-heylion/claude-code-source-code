@@ -25,7 +25,6 @@ jobs:
           set -euxo pipefail
           go install github.com/Zouuup/landrun@main
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
-          "$HOME/go/bin/landrun" --help >/dev/null
 
       - name: Sparse checkout mission and verifier
         shell: bash
