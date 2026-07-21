@@ -1,0 +1,60 @@
+name: Mission 5 verifier v2
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean toolchain manager
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Sparse checkout mission and verifier
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/timqian/mission.land.git mission-land
+          git -C mission-land sparse-checkout set missions/5-erdos-straus tools/lean
+
+      - name: Verify exact control witness
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/baseline.json" 2>&1 | tee baseline.log
+          grep -q "VALID score=0" baseline.log
+
+      - name: Test import-boundary candidate
+        id: import_attack
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/import-challenge.json" 2>&1 | tee import.log
+
+      - name: Test malformed-olean candidate
+        id: olean_attack
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/olean-attack.json" 2>&1 | tee olean.log
+
+      - name: Summarize
+        if: always()
+        shell: bash
+        run: |
+          echo '=== baseline ==='; cat baseline.log || true
+          echo '=== import candidate ==='; cat import.log || true
+          echo '=== olean candidate ==='; cat olean.log || true
+          grep -q "VALID score=1" import.log && echo IMPORT_ACCEPTED || true
+          grep -q "VALID score=1" olean.log && echo OLEAN_ACCEPTED || true
