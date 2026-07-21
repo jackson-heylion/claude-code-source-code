@@ -57,6 +57,16 @@ jobs:
           set -o pipefail
           python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/reducebool-overwrite.json" 2>&1 | tee reducebool.log
 
+      - name: Test reduceBool unchecked-shadow candidate
+        id: reducebool_nocheck_attack
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          rm -rf mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init \
+            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/reducebool-nocheck.json" 2>&1 | tee reducebool-nocheck.log
+
       - name: Build machine-readable result
         if: always()
         shell: bash
@@ -66,10 +76,12 @@ jobs:
             echo "import=$(grep -q 'VALID score=1' import.log && echo ACCEPTED || echo REJECTED)"
             echo "olean=$(grep -q 'VALID score=1' olean.log && echo ACCEPTED || echo REJECTED)"
             echo "reducebool=$(grep -q 'VALID score=1' reducebool.log && echo ACCEPTED || echo REJECTED)"
+            echo "reducebool_nocheck=$(grep -q 'VALID score=1' reducebool-nocheck.log && echo ACCEPTED || echo REJECTED)"
             echo "=== baseline ==="; cat baseline.log || true
             echo "=== import candidate ==="; cat import.log || true
             echo "=== olean candidate ==="; cat olean.log || true
             echo "=== reduceBool overwrite candidate ==="; cat reducebool.log || true
+            echo "=== reduceBool unchecked-shadow candidate ==="; cat reducebool-nocheck.log || true
           } > result.txt
           cat result.txt
 
@@ -84,3 +96,4 @@ jobs:
             import.log
             olean.log
             reducebool.log
+            reducebool-nocheck.log
