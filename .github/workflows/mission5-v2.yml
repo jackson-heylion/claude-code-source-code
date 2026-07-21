@@ -49,12 +49,27 @@ jobs:
           set -o pipefail
           python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/olean-attack.json" 2>&1 | tee olean.log
 
-      - name: Summarize
+      - name: Build machine-readable result
         if: always()
         shell: bash
         run: |
-          echo '=== baseline ==='; cat baseline.log || true
-          echo '=== import candidate ==='; cat import.log || true
-          echo '=== olean candidate ==='; cat olean.log || true
-          grep -q "VALID score=1" import.log && echo IMPORT_ACCEPTED || true
-          grep -q "VALID score=1" olean.log && echo OLEAN_ACCEPTED || true
+          {
+            echo "baseline=$(grep -q 'VALID score=0' baseline.log && echo PASS || echo FAIL)"
+            echo "import=$(grep -q 'VALID score=1' import.log && echo ACCEPTED || echo REJECTED)"
+            echo "olean=$(grep -q 'VALID score=1' olean.log && echo ACCEPTED || echo REJECTED)"
+            echo "=== baseline ==="; cat baseline.log || true
+            echo "=== import candidate ==="; cat import.log || true
+            echo "=== olean candidate ==="; cat olean.log || true
+          } > result.txt
+          cat result.txt
+
+      - name: Upload verifier logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission5-verifier-result
+          path: |
+            result.txt
+            baseline.log
+            import.log
+            olean.log
