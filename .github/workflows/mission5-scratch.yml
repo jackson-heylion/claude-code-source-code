@@ -3,6 +3,8 @@ name: Mission 5 scratch verifier
 on:
   push:
     branches: [mission-5-scratch]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
