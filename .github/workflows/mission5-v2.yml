@@ -49,6 +49,14 @@ jobs:
           set -o pipefail
           python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/olean-attack.json" 2>&1 | tee olean.log
 
+      - name: Test reduceBool environment-overwrite candidate
+        id: reducebool_attack
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/reducebool-overwrite.json" 2>&1 | tee reducebool.log
+
       - name: Build machine-readable result
         if: always()
         shell: bash
@@ -57,9 +65,11 @@ jobs:
             echo "baseline=$(grep -q 'VALID score=0' baseline.log && echo PASS || echo FAIL)"
             echo "import=$(grep -q 'VALID score=1' import.log && echo ACCEPTED || echo REJECTED)"
             echo "olean=$(grep -q 'VALID score=1' olean.log && echo ACCEPTED || echo REJECTED)"
+            echo "reducebool=$(grep -q 'VALID score=1' reducebool.log && echo ACCEPTED || echo REJECTED)"
             echo "=== baseline ==="; cat baseline.log || true
             echo "=== import candidate ==="; cat import.log || true
             echo "=== olean candidate ==="; cat olean.log || true
+            echo "=== reduceBool overwrite candidate ==="; cat reducebool.log || true
           } > result.txt
           cat result.txt
 
@@ -73,3 +83,4 @@ jobs:
             baseline.log
             import.log
             olean.log
+            reducebool.log
