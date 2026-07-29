@@ -64,17 +64,13 @@ jobs:
           python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/baseline.json" 2>&1 | tee baseline.log
           grep -q "VALID score=0" baseline.log
 
-      - name: Test current string-literal candidate
+      - name: Verify formal score-1 record
         id: current_attack
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          rm -rf mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init \
-            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean \
-            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean.server \
-            mission-land/missions/5-erdos-straus/challenge/.lake/build/lib/lean/Init.olean.private
-          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/mission5v2/reducebool-nocheck.json" 2>&1 | tee candidate.log
+          python3 mission-land/missions/5-erdos-straus/verify.py "$GITHUB_WORKSPACE/missions/5-erdos-straus/records/1-jackson-heylion.json" 2>&1 | tee candidate.log
 
       - name: Build machine-readable result
         if: always()
@@ -82,9 +78,9 @@ jobs:
         run: |
           {
             echo "baseline=$(grep -q 'VALID score=0' baseline.log && echo PASS || echo FAIL)"
-            echo "candidate=$(grep -q 'VALID score=1' candidate.log && echo ACCEPTED || echo REJECTED)"
+            echo "formal_record=$(grep -q 'VALID score=1' candidate.log && echo ACCEPTED || echo REJECTED)"
             echo "=== baseline ==="; cat baseline.log || true
-            echo "=== current candidate ==="; cat candidate.log || true
+            echo "=== formal record ==="; cat candidate.log || true
           } > result.txt
           cat result.txt
 
