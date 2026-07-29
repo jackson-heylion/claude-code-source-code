@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: mission5-v2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,12 +23,12 @@ jobs:
           curl -sSf https://elan.lean-lang.org/elan-init.sh | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Install landrun sandbox (best effort)
+      - name: Install landrun sandbox
         shell: bash
         run: |
-          go install github.com/Zouuup/landrun@main \
-            && echo "$HOME/go/bin" >> "$GITHUB_PATH" \
-            || echo "::warning::landrun install failed — using fake-landrun"
+          set -euxo pipefail
+          go install github.com/zouuup/landrun/cmd/landrun@main
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
 
       - name: Sparse checkout mission and verifier
         shell: bash
