@@ -28,8 +28,27 @@ jobs:
         run: |
           set -euxo pipefail
           go install github.com/zouuup/landrun/cmd/landrun@f59e83dbb4fd0af584dec5091168d0b35c8410b7
+          mv "$HOME/go/bin/landrun" "$HOME/go/bin/landrun-real"
+          cat > "$HOME/go/bin/landrun" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          opts=()
+          while (($#)); do
+            case "$1" in
+              --best-effort|--ldd|-ldd|--add-exec|-add-exec|--unrestricted-filesystem|--unrestricted-network)
+                opts+=("$1"); shift ;;
+              --ro|--rw|--rox|--rwx|--env|--bind-tcp|--connect-tcp|--log-level)
+                opts+=("$1" "$2"); shift 2 ;;
+              *)
+                exec "$(dirname "$0")/landrun-real" "${opts[@]}" -- "$@" ;;
+            esac
+          done
+          echo "landrun wrapper: missing child command" >&2
+          exit 2
+          SH
+          chmod +x "$HOME/go/bin/landrun"
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
-          "$HOME/go/bin/landrun" --version
+          "$HOME/go/bin/landrun-real" --version
 
       - name: Sparse checkout mission and verifier
         shell: bash
